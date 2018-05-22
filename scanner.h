@@ -11,12 +11,12 @@ public:
     void sendRequest();
 
 
-
 private:
     QUdpSocket* udpSocket;
     QTimer *timer;
-    void initSocket();
     bool reading;
+
+    void initSocket();    
     QString getIp(QByteArray ba);
     QString getMac(QByteArray ba);
 

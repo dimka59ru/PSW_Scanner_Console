@@ -9,7 +9,5 @@ int main(int argc, char *argv[])
     Scanner scanner;
     scanner.sendRequest();
 
-    //scanner.sendRequest();
-
     return a.exec();
 }
