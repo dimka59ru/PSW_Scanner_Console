@@ -3,7 +3,7 @@
 #include <QNetworkDatagram>
 #include <typeinfo>
 
-const char REQUEST_FOR_SEARCH          = 0xe0; // Байт запроса на поиск
+const qint8 REQUEST_FOR_SEARCH          = 0xe0; // Байт запроса на поиск
 const int  PORT                        = 6123; // Порт для сокета
 const int  LENGTH_MESSAGE              = 444;  // Длина дейтаграммы
 
@@ -13,7 +13,9 @@ Scanner::Scanner()
 {
     reading = false;
     this->initSocket(); // Инициализация сокета
-    this->sendRequest(); // Отправка в сеть запроса на поиск
+//    this->sendRequest(); // Отправка в сеть запроса на поиск
+
+    QTimer::singleShot(50000, this, SLOT(slotTimeout()));
 }
 
 
@@ -23,9 +25,7 @@ void Scanner::initSocket(){
     udpSocket->bind(PORT);
 
     connect(udpSocket, SIGNAL(readyRead()),
-            this, SLOT(readPendingDatagrams()));
-
-    QTimer::singleShot(2000, this, SLOT(slotTimeout()));
+            this, SLOT(readPendingDatagrams()));    
 
 }
 
@@ -39,6 +39,8 @@ void Scanner::sendRequest()
     reading = true;
 
     qDebug() << "The datagram was sent";
+    qDebug() << udpSocket;
+    qDebug() << udpSocket->bytesAvailable();
 }
 
 
@@ -47,6 +49,8 @@ void Scanner::readPendingDatagrams()
     QByteArray datagram;
     QHostAddress senderAddress;
     quint16 senderPort;
+    qDebug() << "in reading";
+
 
     while (udpSocket->hasPendingDatagrams() && reading) {
         //        QNetworkDatagram datagram = udpSocket->receiveDatagram();
@@ -55,7 +59,7 @@ void Scanner::readPendingDatagrams()
         qDebug() << "Received a response from " << QHostAddress(senderAddress.toIPv4Address()).toString();
 
         QString ip  = getIp(datagram.mid(2, 4));
-        QString mac = getMac(datagram.mid(6,6));
+        QString mac = getMac(datagram.mid(6, 6));
 
         qDebug() << "\t" << ip;
         qDebug() << "\t" << mac;
