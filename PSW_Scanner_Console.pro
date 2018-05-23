@@ -18,7 +18,9 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         main.cpp \
-    scanner.cpp
+    scanner.cpp \
+    device.cpp
 
 HEADERS += \
-    scanner.h
+    scanner.h \
+    device.h
