@@ -1,7 +1,8 @@
 #include "scanner.h"
 #include "device.h"
 #include <QDebug>
-
+#include <QTextStream>
+#include <QCoreApplication>
 
 const char  REQUEST_FOR_SEARCH         = 0xe0; // Байт запроса на поиск
 const char  RESPONSE_TO_SEARCH_REQUEST = 0xe1; // Байт ответа на поиск
@@ -9,7 +10,7 @@ const int   PORT                       = 6123; // Порт для сокета
 const int   LENGTH_MESSAGE             = 444;  // Длина дейтаграммы
 const int   TIMEOUT                    = 5000; // Время ожидания ответов
 
-
+int Device::sum = 0;
 
 Scanner::Scanner()
 {
@@ -19,6 +20,10 @@ Scanner::Scanner()
     this->initSocket(); // Инициализация сокета
 
     QTimer::singleShot(TIMEOUT, this, SLOT(slotTimeout()));
+    //    QTimer *timer = new QTimer(this);
+    //    connect(timer, SIGNAL(timeout()), this, SLOT(slotTimeout()));
+    //    timer->start();
+
     timeout = true;
 
     counter = 0;
@@ -53,32 +58,30 @@ void Scanner::sendRequest()
 void Scanner::readPendingDatagrams()
 {
     QByteArray datagram;
-    Device device;
 
     while (udpSocket->hasPendingDatagrams() && !timeout)
     {
         datagram.resize(udpSocket->pendingDatagramSize());
         udpSocket->readDatagram(datagram.data(), datagram.size());
 
-        if (datagram.front() == RESPONSE_TO_SEARCH_REQUEST)
+        if (datagram[0] == RESPONSE_TO_SEARCH_REQUEST)
         {
-            counter++;
-//            dataQueue.enqueue(datagram.data());
+            Device device;
+            device.sum++;
+            //            counter++;
+            //            dataQueue.enqueue(datagram.data());
 
             if (hashDevices.contains(datagram.at(1)))
                 device.setModel(hashDevices[datagram.at(1)]);
             else
                 device.setModel("Unknown");
 
+            device.setIp(datagram.mid(2, 4));
+            device.setMac(datagram.mid(6, 6));
+            //            QString ip  = getIp(datagram.mid(2, 4));
+            //            QString mac = getMac(datagram.mid(6, 6));
 
-            QString ip  = getIp(datagram.mid(2, 4));
-            QString mac = getMac(datagram.mid(6, 6));
-
-            qDebug().noquote().nospace() << "Device " << counter << ":";
-            qDebug().noquote() << "\tModel:" << device.getModel();
-            qDebug().noquote() << "\tIP:" << ip;
-            qDebug().noquote() << "\tMAC" << mac;
-            qDebug().noquote() << "\n";
+            device.print();
         }
     }
 }
@@ -86,28 +89,40 @@ void Scanner::readPendingDatagrams()
 void Scanner::slotTimeout()
 {
     qDebug().noquote() << "Timeout";
-
-    if (counter == 0)
-        qDebug().noquote() << "Not found devices";
-
-    qDebug().noquote() << "Found" << counter << "devices";
+    qDebug().noquote() << "Number of devices:" << Device::sum;
     timeout = true;
-}
 
-QString Scanner::getIp(QByteArray ba) {
-    QString ip = "";
-    uchar oneByte = 0;
-    for (int i = 0; i < 4; i++) {
-        if (i)
-            ip.append('.');
-        oneByte = ba.at(i);
-        ip.append(QString::number(oneByte));
+    qDebug().noquote() << "Search again? (Y\\N)";
+    QTextStream s(stdin);
+    QString value = s.readLine();
+    if (value == "Y" || value == "y")
+    {
+        Device::sum = 0;
+        timeout = false;
+        sendRequest();
+        QTimer::singleShot(TIMEOUT, this, SLOT(slotTimeout()));
     }
-    return ip;
+    else
+    {
+        qApp->quit();
+    }
+
 }
 
-QString Scanner::getMac(QByteArray ba) {
-    QString mac = ba.toHex(':').toUpper();
-    return mac;
-}
+//QString Scanner::getIp(QByteArray ba) {
+//    QString ip = "";
+//    uchar oneByte = 0;
+//    for (int i = 0; i < 4; i++) {
+//        if (i)
+//            ip.append('.');
+//        oneByte = ba.at(i);
+//        ip.append(QString::number(oneByte));
+//    }
+//    return ip;
+//}
+
+//QString Scanner::getMac(QByteArray ba) {
+//    QString mac = ba.toHex(':').toUpper();
+//    return mac;
+//}
 

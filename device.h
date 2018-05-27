@@ -5,14 +5,25 @@
 class Device
 {
 public:
-    Device();
+//    Device(QString model);
     void setModel(QString model);
-    QString getModel();
+    void setIp(QByteArray ba);
+    void setMac(QByteArray ba);
+
+//    QString getModel();
+//    QString getIP();
+
+    void print();
+
+    static int sum;
 
 private:
     QString model;
     QString ip;
     QString mac;
+
+
+
 };
 
 #endif // DEVICE_H

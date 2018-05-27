@@ -7,7 +7,7 @@ int main(int argc, char *argv[])
     QCoreApplication a(argc, argv);
 
     Scanner scanner;
-    scanner.sendRequest();
+    scanner.sendRequest();    
 
     return a.exec();
 }
